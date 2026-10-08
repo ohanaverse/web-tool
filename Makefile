@@ -22,7 +22,7 @@ define check-docker-credentials
 	fi
 endef
 
-.PHONY: help install dev run lint format check test testcov testv docs check-imports clean docker-run docker-build docker-buildx docker-push docker-release docker-stop docker-clean
+.PHONY: help install dev nltk-data run lint format check test testcov testv docs check-imports clean docker-run docker-build docker-buildx docker-push docker-release docker-stop docker-clean
 
 .DEFAULT_GOAL := help
 
@@ -33,6 +33,7 @@ help:
 	@echo "Development:"
 	@echo "  make install    - Install project with all dependencies"
 	@echo "  make dev        - Install development dependencies"
+	@echo "  make nltk-data  - Download NLTK corpora (run by install/dev)"
 	@echo "  make run        - Run the application locally"
 	@echo ""
 	@echo "Linting & Formatting:"
@@ -64,11 +65,18 @@ help:
 install:
 	@echo "Installing project with runtime dependencies..."
 	uv pip install -e .
+	@$(MAKE) nltk-data
 
 # Install with all dependencies (including dev)
 dev:
 	@echo "Installing project with development dependencies..."
 	uv pip install -e ".[dev]"
+	@$(MAKE) nltk-data
+
+# Download the NLTK corpora the app needs (same set as the Dockerfile)
+nltk-data:
+	@echo "Downloading NLTK data (wordnet, words)..."
+	uv run python -m nltk.downloader -q wordnet words
 
 # Run the application locally
 run:

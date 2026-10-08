@@ -189,6 +189,7 @@ When writing tests, always add a comment describing what the test does and why i
 ## Python Runtime
 - **Use `uv run`** for all commands — `pyproject.toml` requires Python 3.14 only (`>=3.14,<3.15`). Using a pyenv-managed Python will fail to find test dependencies.
 - **Dev deps required:** Run `make dev` before `make test` or `uv run python -m pytest` — pytest/ruff are dev dependencies, not installed by `make install`
+- **Native prerequisites:** CairoSVG needs the Cairo library (`brew install cairo` on macOS); `make dev`/`make install` download the NLTK `wordnet` and `words` corpora via `make nltk-data`
 
 ## Python Version Upgrades
 - **Hard cutover:** Update `requires-python`, ruff `target-version`, Dockerfile base image, `.python-version`, and docs together
