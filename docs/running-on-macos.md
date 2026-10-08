@@ -168,6 +168,10 @@ scripts/web-tool-autostart.sh uninstall
 This unloads and deletes the agent but leaves any running container in place.
 Stop it with `container stop web-tool`.
 
+While the agent is installed, `container stop web-tool` does not keep web-tool
+stopped: the attached `container run` exits with code 137 and launchd relaunches
+it. To stop it for good, uninstall the agent first.
+
 ## Differences from the Docker setup
 
 | | Docker | Apple `container` |
@@ -210,9 +214,11 @@ See [Data directory](#data-directory): the bind mount may be root-owned, so make
 `WEB_TOOL_DATA_DIR` writable by uid 1000.
 
 **The agent keeps restarting**
-The script exits non-zero if `container system start`, `container image pull`, or
-`container run` fails, which triggers a throttled relaunch. Read
-`~/Library/Logs/web-tool.log` for the underlying error, then fix it before
+The script exits non-zero if `container system start` or `container run` fails,
+which triggers a throttled relaunch. A failed `container image pull` (for
+example, logging in without a network) is fatal only when the image is not
+already cached; otherwise the agent logs a warning and starts the cached image.
+Read `~/Library/Logs/web-tool.log` for the underlying error, then fix it before
 letting it retry.
 
 ## Manual verification checklist

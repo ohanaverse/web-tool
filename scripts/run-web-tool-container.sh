@@ -53,8 +53,16 @@ container system start --enable-kernel-install --timeout 60
 mkdir -p "$DATA_DIR"
 
 # Pull before removing the old container so a failed pull (offline, registry
-# error) leaves the existing container running.
-container image pull "$IMAGE"
+# error) leaves the existing container running. Under launchd (--foreground) a
+# failed pull is tolerated when the image is already cached, so logging in
+# without a network still starts web-tool.
+if ! container image pull "$IMAGE"; then
+  if $FOREGROUND && container image inspect "$IMAGE" >/dev/null 2>&1; then
+    echo "warning: image pull failed; starting the cached $IMAGE" >&2
+  else
+    exit 1
+  fi
+fi
 
 # Remove any existing container, ignoring errors when it is absent.
 container delete --force "$CONTAINER_NAME" >/dev/null 2>&1 || true
