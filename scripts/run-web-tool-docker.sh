@@ -31,11 +31,14 @@ fi
 # 1000) can then no longer write the favicon cache to it.
 mkdir -p "$DATA_DIR"
 
+# Pull before removing the old container so a failed pull (offline, registry
+# error) leaves the existing container running.
+docker pull "$IMAGE"
+
 # Stop and remove any existing container, ignoring errors when it is absent.
 docker stop "$CONTAINER_NAME" >/dev/null 2>&1 || true
 docker rm "$CONTAINER_NAME" >/dev/null 2>&1 || true
 
-docker pull "$IMAGE"
 docker run -d --restart always \
   -p "${PORT}:8532" \
   -v "${DATA_DIR}:/data" \

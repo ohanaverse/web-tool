@@ -55,6 +55,12 @@ require_macos() {
   fi
 }
 
+# Escape a value for use as plist XML text, so paths containing & or < do not
+# produce a plist that launchctl refuses to load.
+xml_escape() {
+  printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'
+}
+
 install_agent() {
   require_macos
 
@@ -85,19 +91,19 @@ install_agent() {
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>$RUN_SCRIPT</string>
+    <string>$(xml_escape "$RUN_SCRIPT")</string>
     <string>--foreground</string>
   </array>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>
-    <string>$AGENT_PATH</string>
+    <string>$(xml_escape "$AGENT_PATH")</string>
     <key>WEB_TOOL_PORT</key>
-    <string>$PORT</string>
+    <string>$(xml_escape "$PORT")</string>
     <key>WEB_TOOL_DATA_DIR</key>
-    <string>$DATA_DIR</string>
+    <string>$(xml_escape "$DATA_DIR")</string>
     <key>WEB_TOOL_IMAGE</key>
-    <string>$IMAGE</string>
+    <string>$(xml_escape "$IMAGE")</string>
   </dict>
   <key>RunAtLoad</key>
   <true/>
@@ -109,15 +115,22 @@ install_agent() {
   <key>ThrottleInterval</key>
   <integer>30</integer>
   <key>StandardOutPath</key>
-  <string>$LOG_FILE</string>
+  <string>$(xml_escape "$LOG_FILE")</string>
   <key>StandardErrorPath</key>
-  <string>$LOG_FILE</string>
+  <string>$(xml_escape "$LOG_FILE")</string>
 </dict>
 </plist>
 PLIST_EOF
 
   # Reload cleanly: bootout an existing registration, then bootstrap the new one.
+  # bootout returns before launchd has finished tearing the job down, and a
+  # bootstrap issued in that window fails with "Input/output error", so wait
+  # for the old registration to disappear first.
   launchctl bootout "$DOMAIN/$LABEL" >/dev/null 2>&1 || true
+  for _ in $(seq 1 30); do
+    launchctl print "$DOMAIN/$LABEL" >/dev/null 2>&1 || break
+    sleep 1
+  done
   launchctl bootstrap "$DOMAIN" "$PLIST"
 
   echo "installed $PLIST"

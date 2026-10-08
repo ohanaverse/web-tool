@@ -44,7 +44,7 @@ container system start --enable-kernel-install
 ## Run web-tool
 
 [`scripts/run-web-tool-container.sh`](../scripts/run-web-tool-container.sh)
-stops any existing `web-tool` container, pulls the latest image, and starts a
+pulls the latest image, replaces any existing `web-tool` container, and starts a
 new one:
 
 ```bash
@@ -93,10 +93,12 @@ host is set automatically from the port in the URL).
 
 ### Port publishing
 
-`container run -p` publishes the port **on the loopback interface only**, so the
-service is reachable at `http://localhost:<port>` but not from other machines on
-your network. This is stricter than Docker, which binds `0.0.0.0` by default,
-and it is sufficient for the bookmarklet workflow.
+The run script publishes the port as `127.0.0.1:<port>:8532`, **on the loopback
+interface only**, so the service is reachable at `http://localhost:<port>` but
+not from other machines on your network. This is stricter than the Docker
+script, which binds `0.0.0.0`, and it is sufficient for the bookmarklet
+workflow. (Without an explicit host IP, `container run -p` binds `0.0.0.0` just
+as Docker does.)
 
 ### Data directory
 

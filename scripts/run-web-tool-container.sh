@@ -52,24 +52,32 @@ container system start --enable-kernel-install --timeout 60
 # (uid 1000) can then no longer write the favicon cache to it.
 mkdir -p "$DATA_DIR"
 
+# Pull before removing the old container so a failed pull (offline, registry
+# error) leaves the existing container running.
+container image pull "$IMAGE"
+
 # Remove any existing container, ignoring errors when it is absent.
 container delete --force "$CONTAINER_NAME" >/dev/null 2>&1 || true
 
-container image pull "$IMAGE"
+# CONTAINER_RUNTIME tells web-tool it is containerized. Apple's runtime leaves
+# none of the Docker markers the app otherwise detects (/.dockerenv, cgroup
+# names), and without it the app listens on its dev port instead of 8532 and
+# ignores /data.
+# The explicit 127.0.0.1 keeps the port off the network; with no host IP,
+# `container run -p` binds all interfaces.
+RUN_ARGS=(
+  -p "127.0.0.1:${PORT}:8532"
+  -v "${DATA_DIR}:/data"
+  -e "CONTAINER_RUNTIME=apple-container"
+  --name "$CONTAINER_NAME"
+  "$IMAGE"
+)
 
 if $FOREGROUND; then
   # Attached mode for launchd: exec so launchd supervises this process and can
   # restart it when it exits unexpectedly.
-  exec container run \
-    -p "${PORT}:8532" \
-    -v "${DATA_DIR}:/data" \
-    --name "$CONTAINER_NAME" \
-    "$IMAGE"
+  exec container run "${RUN_ARGS[@]}"
 else
-  container run -d \
-    -p "${PORT}:8532" \
-    -v "${DATA_DIR}:/data" \
-    --name "$CONTAINER_NAME" \
-    "$IMAGE"
+  container run -d "${RUN_ARGS[@]}"
   echo "web-tool running at http://localhost:${PORT}"
 fi

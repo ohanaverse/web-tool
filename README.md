@@ -123,7 +123,7 @@ The published image (`dockmann/web-tool`) can be run with either Docker or
 
 ### Docker
 
-[`scripts/run-web-tool-docker.sh`](scripts/run-web-tool-docker.sh) stops any
+[`scripts/run-web-tool-docker.sh`](https://github.com/ohanaverse/web-tool/blob/main/scripts/run-web-tool-docker.sh) stops any
 running `web-tool` container, pulls the latest image, and starts a fresh one
 that restarts automatically:
 
@@ -140,7 +140,7 @@ scripts/run-web-tool-docker.sh
 
 ### Apple container (macOS)
 
-[`scripts/run-web-tool-container.sh`](scripts/run-web-tool-container.sh) does the
+[`scripts/run-web-tool-container.sh`](https://github.com/ohanaverse/web-tool/blob/main/scripts/run-web-tool-container.sh) does the
 same with Apple's `container` CLI:
 
 <pre>
@@ -148,14 +148,14 @@ scripts/run-web-tool-container.sh
 </pre>
 
 Apple's runtime has no built-in restart policy, so
-[`scripts/web-tool-autostart.sh`](scripts/web-tool-autostart.sh) installs a
+[`scripts/web-tool-autostart.sh`](https://github.com/ohanaverse/web-tool/blob/main/scripts/web-tool-autostart.sh) installs a
 launchd agent that starts the container at login and restarts it if it crashes:
 
 <pre>
 scripts/web-tool-autostart.sh install
 </pre>
 
-See [docs/running-on-macos.md](docs/running-on-macos.md) for prerequisites,
+See [docs/running-on-macos.md](https://github.com/ohanaverse/web-tool/blob/main/docs/running-on-macos.md) for prerequisites,
 configuration, logs, and troubleshooting.
 
 ### Configuration
