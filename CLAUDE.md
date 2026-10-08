@@ -174,6 +174,14 @@ When writing tests, always add a comment describing what the test does and why i
 - **sed macOS compatibility**: Basic `sed 's/pattern/replacement/'` works on both GNU and BSD sed; only `sed -i` (in-place editing) requires macOS-specific handling
 - **Worktree file sync**: If changes exist in the main worktree before creating a new worktree, either stash them first or run `git checkout <branch> -- <file>` in the worktree to get the correct version before editing
 
+### Container Run Scripts
+- **Scripts:** `scripts/run-web-tool-docker.sh`, `scripts/run-web-tool-container.sh` (Apple `container`), `scripts/web-tool-autostart.sh {install|uninstall|status}` (launchd agent `com.dockmann.web-tool`); guide at `docs/running-on-macos.md`
+- **Apple runtime detection:** it leaves no Docker markers (`/.dockerenv`, cgroup names), so pass `-e CONTAINER_RUNTIME=...` or the app binds dev port 8535 in debug mode and ignores `/data`
+- **Apple port publishing:** `container run -p HOST:CONTAINER` binds `0.0.0.0`; use `127.0.0.1:HOST:CONTAINER` for loopback-only
+- **Autostart bakes the checkout path:** the plist points at the run script in the checkout it was installed from; switching to a branch without `scripts/` makes launchd retry every 30s — run `uninstall` first
+- **Verify a live container:** `container ls -a`, `container logs web-tool`, `lsof -nP -iTCP:8532 -sTCP:LISTEN`, `tail ~/Library/Logs/web-tool.log`
+- **Shell script checks:** `shellcheck scripts/*.sh` and `/bin/bash -n` (macOS ships bash 3.2 — no bash 4 features)
+
 ### Git Workflow
 
 #### Branch Verification Check
@@ -227,6 +235,7 @@ When writing tests, always add a comment describing what the test does and why i
 
 ## Documentation
 - Keep CONTRIBUTING.md dependency versions in sync with pyproject.toml constraints
+- **README links:** `README.md` is rendered at `/` by the app and pasted into Docker Hub, where repo-relative links 404 — use absolute `https://github.com/ohanaverse/web-tool/blob/main/...` URLs for anything outside the image
 
 ## AI-Generated Planning Documents
 
@@ -238,7 +247,7 @@ When writing tests, always add a comment describing what the test does and why i
 **Design docs vs. PR docs:** Design specs go to `docs/superpowers/specs/` and get committed (they're part of feature development). PR planning docs (task lists, implementation notes) should be attached to PR comments, not committed.
 
 ## Testing
-- **Tests:** `tests/test_*.py` (273 tests as of 2026-04) — unit tests for library modules in `library/`, integration tests for routes
+- **Tests:** `tests/test_*.py` (341 tests as of 2026-10) — unit tests for library modules in `library/`, integration tests for routes
 - **Mocking Pillow images:** When mocking `Image.resize`, set `.resize.return_value = mock_img` so callers can chain `.width`/`.height` on the returned image
 - **Unused variables:** Run `ruff check --select F841` before committing; unused assignments in tests often indicate incomplete assertions
 - **Test pattern consistency:** When adding paired tests (e.g., ICO/SVG variants), match the existing test's structure exactly — don't assign `result` if sibling test doesn't use it
@@ -281,7 +290,7 @@ The `web-tool` is a utility for extracting and processing information from web p
   - `unicode_util.py` (category names)
   - `content_type.py` (MIME type detection)
   - `fragment_handlers.py` (anchor/heading fragment resolution)
-  - `docker_util.py` (container detection)
+  - `docker_util.py` (container detection via `/.dockerenv`, `CONTAINER_RUNTIME` env, cgroup names, hostname prefix, `uname` — selects port 8532 vs dev 8535 and the `/data` cache path)
 - **Favicon System**: Implements a three-tier cache for favicons:
     1. `static/favicon-overrides.yml` (User Overrides - Highest priority)
     2. `static/favicon.yml` (App Defaults - Medium priority)
