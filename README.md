@@ -116,34 +116,57 @@ Inline images are resized to 20px height. Only overrides support inline images; 
 - **Domain only**: `example.com` — matches all pages on the domain
 - **Domain + path**: `example.com/docs` — matches the first path segment
 
-## Running with Docker
+## Running the Container
 
-Stops any running container, pulls the latest image, and starts web-tool with auto-restart.
+The published image (`dockmann/web-tool`) can be run with either Docker or
+[Apple's `container` runtime](#apple-container-macos).
+
+### Docker
+
+[`scripts/run-web-tool-docker.sh`](https://github.com/ohanaverse/web-tool/blob/main/scripts/run-web-tool-docker.sh) stops any
+running `web-tool` container, pulls the latest image, and starts a fresh one
+that restarts automatically:
+
+<pre>
+scripts/run-web-tool-docker.sh
+</pre>
 
 - `-d` runs the container in the background
 - `--restart always` restarts the container if it crashes or when Docker restarts
 - `-p ${PORT}:8532` maps a host port to the container's port 8532
-- `-v ${DATA_DIR}:/data` persists the favicon cache to the host; omit to skip persistence
-- `mkdir -p` creates the data directory before Docker can create it as root
+- `-v ${DATA_DIR}:/data` persists the favicon cache to the host
+- the script creates the data directory first so the container's appuser
+  (uid 1000) can write to it
+
+### Apple container (macOS)
+
+[`scripts/run-web-tool-container.sh`](https://github.com/ohanaverse/web-tool/blob/main/scripts/run-web-tool-container.sh) does the
+same with Apple's `container` CLI:
 
 <pre>
-PORT=8532
-DATA_DIR=$(pwd)/web-tool
-
-# Create data directory owned by current user so appuser (uid 1000) can write to it.
-mkdir -p "${DATA_DIR}"
-
-# Stop and remove the currently running web-tool, ignoring errors.
-docker stop web-tool || true
-docker rm web-tool || true
-
-# Download the latest image and run it.
-docker pull dockmann/web-tool
-docker run -d --restart always \
-  -p ${PORT}:8532 \
-  -v ${DATA_DIR}:/data \
-  --name web-tool dockmann/web-tool
+scripts/run-web-tool-container.sh
 </pre>
+
+Apple's runtime has no built-in restart policy, so
+[`scripts/web-tool-autostart.sh`](https://github.com/ohanaverse/web-tool/blob/main/scripts/web-tool-autostart.sh) installs a
+launchd agent that starts the container at login and restarts it if it crashes:
+
+<pre>
+scripts/web-tool-autostart.sh install
+</pre>
+
+See [docs/running-on-macos.md](https://github.com/ohanaverse/web-tool/blob/main/docs/running-on-macos.md) for prerequisites,
+configuration, logs, and troubleshooting.
+
+### Configuration
+
+Both run scripts honour these environment variables:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `WEB_TOOL_PORT` | `8532` | Host port to publish |
+| `WEB_TOOL_DATA_DIR` | `$HOME/docker-data/web-tool` | Host directory persisted as `/data` (favicon cache) |
+| `WEB_TOOL_IMAGE` | `dockmann/web-tool` | Image reference (the Apple container script uses the fully-qualified `docker.io/dockmann/web-tool`) |
 
 For development and release instructions, see [CONTRIBUTING.md](CONTRIBUTING.md).
 

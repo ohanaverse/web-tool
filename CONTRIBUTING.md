@@ -2,6 +2,20 @@
 
 This document is the developer reference for building, releasing, and contributing to web-tool.
 
+## Local Development
+
+**Prerequisites:**
+- [uv](https://docs.astral.sh/uv/) and Python 3.14
+- The Cairo graphics library, which CairoSVG loads at import time. On macOS: `brew install cairo`. On Debian/Ubuntu: `apt-get install libcairo2`.
+
+**Setup:**
+<pre>
+make dev    # install dev dependencies and download NLTK data
+make test   # run the test suite
+</pre>
+
+`make dev` and `make install` also download the NLTK `wordnet` and `words` corpora to `~/nltk_data` (run `make nltk-data` to fetch them on their own). Without Cairo, `make test` fails with `cannot load library 'libcairo-2.dll'`; without the corpora it fails with `Resource 'words' not found`.
+
 ## Building and Publishing
 
 To build and push the Docker image locally:
